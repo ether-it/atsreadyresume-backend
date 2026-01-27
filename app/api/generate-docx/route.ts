@@ -1,41 +1,46 @@
-export const runtime = "nodejs";
+import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
   try {
-    // 1. API KEY SECURITY
-    const apiKey = req.headers.get("x-internal-api-key");
+    // 1. Read secret from Vercel environment
+    const SERVER_SECRET = process.env.DOCX_API_SECRET;
 
-    if (!apiKey || apiKey !== process.env.DOCX_API_SECRET) {
-      return new Response(
-        JSON.stringify({ error: "Unauthorized" }),
+    // 2. Read secret sent by client (n8n)
+    const clientSecret = req.headers.get("x-internal-api-key");
+
+    // 3. Block if secret is missing or wrong
+    if (!SERVER_SECRET || clientSecret !== SERVER_SECRET) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
         { status: 401 }
       );
     }
 
-    // 2. PARSE BODY
+    // 4. Read request body
     const body = await req.json();
 
-    if (!body || !body.meta || !body.personal) {
-      return new Response(
-        JSON.stringify({ error: "Invalid payload" }),
+    // 5. Basic validation
+    if (!body?.meta || !body?.personal) {
+      return NextResponse.json(
+        { error: "Invalid payload" },
         { status: 400 }
       );
     }
 
-    // 3. TEMP SUCCESS RESPONSE (DOCX COMES NEXT)
-    return new Response(
-      JSON.stringify({
+    // 6. TEMP success response (DOCX comes next)
+    return NextResponse.json(
+      {
         status: "OK",
         message: "BA resume payload received",
         role: body.meta.role,
-        level: body.meta.level
-      }),
+        level: body.meta.level,
+      },
       { status: 200 }
     );
 
-  } catch (err) {
-    return new Response(
-      JSON.stringify({ error: "Server error" }),
+  } catch (error) {
+    return NextResponse.json(
+      { error: "Server error" },
       { status: 500 }
     );
   }
