@@ -12,7 +12,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // 2. READ REQUEST BODY
+    // 2. PARSE BODY
     const body = await req.json();
 
     if (!body || !body.meta || !body.personal) {
